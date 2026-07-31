@@ -1,0 +1,694 @@
+threagile_version: 1.0.0
+
+title: DigiLocker Threat Model
+
+author:
+  name: Swetha
+
+date: 2026-07-24
+
+business_overview:
+  description: >
+    DigiLocker is a Government of India digital document wallet that
+    enables citizens to securely store, access and share official
+    digital documents.
+
+business_criticality: important
+
+management_summary_comment: >
+  Threat model prepared for DigiLocker architecture.
+
+questions:
+
+abuse_cases:
+
+security_requirements:
+
+tags_available:
+  - DigiLocker
+  - Government
+  - Identity
+  - Cloud
+  - API
+
+data_assets:
+
+  aadhaar-data:
+    id: aadhaar-data
+    description: Aadhaar identity information
+    usage: business
+    origin: Identity Provider
+    owner: UIDAI
+    quantity: many
+    confidentiality: strictly-confidential
+    integrity: mission-critical
+    availability: important
+    justification_cia_rating: Sensitive citizen identity information.
+
+  citizen-profile:
+    id: citizen-profile
+    description: Citizen personal profile
+    usage: business
+    origin: Citizen
+    owner: DigiLocker
+    quantity: many
+    confidentiality: confidential
+    integrity: critical
+    availability: important
+    justification_cia_rating: Contains citizen personal information.
+
+  issued-documents:
+    id: issued-documents
+    description: Government issued certificates
+    usage: business
+    origin: Issuer
+    owner: DigiLocker
+    quantity: many
+    confidentiality: confidential
+    integrity: mission-critical
+    availability: mission-critical
+    justification_cia_rating: Official certificates and records.
+
+  uploaded-documents:
+    id: uploaded-documents
+    description: User uploaded files
+    usage: business
+    origin: Citizen
+    owner: Citizen
+    quantity: many
+    confidentiality: confidential
+    integrity: important
+    availability: important
+    justification_cia_rating: Personal uploaded files.
+
+  consent-records:
+    id: consent-records
+    description: Consent history
+    usage: business
+    origin: Consent Manager
+    owner: DigiLocker
+    quantity: many
+    confidentiality: confidential
+    integrity: mission-critical
+    availability: important
+    justification_cia_rating: Legal consent information.
+
+  authentication-tokens:
+    id: authentication-tokens
+    description: Session tokens
+    usage: business
+    origin: Authentication Service
+    owner: DigiLocker
+    quantity: many
+    confidentiality: strictly-confidential
+    integrity: mission-critical
+    availability: important
+    justification_cia_rating: Used for authentication.
+
+  audit-logs:
+    id: audit-logs
+    description: Security audit logs
+    usage: business
+    origin: Monitoring
+    owner: DigiLocker
+    quantity: many
+    confidentiality: internal
+    integrity: mission-critical
+    availability: important
+    justification_cia_rating: Security investigation records.
+
+  digital-signatures:
+    id: digital-signatures
+    description: Digital signature information
+    usage: business
+    origin: Issuer
+    owner: DigiLocker
+    quantity: many
+    confidentiality: confidential
+    integrity: mission-critical
+    availability: important
+    justification_cia_rating: Digital signatures for document verification.
+
+technical_assets:
+  citizen-web-portal:
+    id: citizen-web-portal
+    description: DigiLocker Citizen Web Portal
+    type: process
+    usage: business
+    used_as_client_by_human: true
+    out_of_scope: false
+    size: application
+    technology: web-application
+    internet: true
+    machine: virtual
+    encryption: transparent
+    owner: DigiLocker
+    confidentiality: confidential
+    integrity: important
+    availability: important
+    multi_tenant: false
+    redundant: true
+    custom_developed_parts: true
+    data_assets_processed:
+      - citizen-profile
+      - authentication-tokens
+    data_assets_stored: []
+    communication_links:
+      Web Portal to API Gateway:
+        target: api-gateway
+        description: Citizen browser session calling the platform API
+        protocol: https
+        authentication: session-id
+        authorization: enduser-identity-propagation
+        tags:
+        vpn: false
+        ip_filtered: false
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - authentication-tokens
+        data_assets_received:
+          - citizen-profile
+          - authentication-tokens
+
+  mobile-app:
+    id: mobile-app
+    description: DigiLocker Mobile Application
+    type: process
+    usage: business
+    used_as_client_by_human: true
+    out_of_scope: false
+    size: application
+    technology: mobile-app
+    internet: true
+    machine: physical
+    encryption: transparent
+    owner: DigiLocker
+    confidentiality: confidential
+    integrity: important
+    availability: important
+    multi_tenant: false
+    redundant: false
+    custom_developed_parts: true
+    data_assets_processed:
+      - citizen-profile
+      - authentication-tokens
+    data_assets_stored: []
+    communication_links:
+      Mobile App to API Gateway:
+        target: api-gateway
+        description: Mobile app calling the platform API
+        protocol: https
+        authentication: token
+        authorization: enduser-identity-propagation
+        tags:
+        vpn: false
+        ip_filtered: false
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - authentication-tokens
+        data_assets_received:
+          - citizen-profile
+          - authentication-tokens
+
+  api-gateway:
+    id: api-gateway
+    description: API Gateway
+    type: process
+    usage: business
+    size: service
+    technology: gateway
+    internet: true
+    machine: container
+    encryption: transparent
+    owner: DigiLocker
+    confidentiality: confidential
+    integrity: mission-critical
+    availability: mission-critical
+    multi_tenant: false
+    redundant: true
+    custom_developed_parts: true
+    data_assets_processed:
+      - authentication-tokens
+      - citizen-profile
+    data_assets_stored: []
+    communication_links:
+      Gateway to Authentication Service:
+        target: authentication-service
+        description: Token validation and login handling
+        protocol: https
+        authentication: token
+        authorization: technical-user
+        tags:
+        vpn: false
+        ip_filtered: false
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - authentication-tokens
+        data_assets_received:
+          - authentication-tokens
+      Gateway to DigiLocker Backend:
+        target: digilocker-backend
+        description: Business API calls to the core backend
+        protocol: https
+        authentication: token
+        authorization: enduser-identity-propagation
+        tags:
+        vpn: false
+        ip_filtered: false
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - citizen-profile
+          - authentication-tokens
+        data_assets_received:
+          - citizen-profile
+          - issued-documents
+          - uploaded-documents
+          - consent-records
+
+  authentication-service:
+    id: authentication-service
+    description: Single Sign-On Authentication Service
+    type: process
+    usage: business
+    size: service
+    technology: identity-provider
+    internet: false
+    machine: container
+    encryption: transparent
+    owner: DigiLocker
+    confidentiality: strictly-confidential
+    integrity: mission-critical
+    availability: mission-critical
+    multi_tenant: false
+    redundant: true
+    custom_developed_parts: true
+    data_assets_processed:
+      - authentication-tokens
+      - aadhaar-data
+    data_assets_stored: []
+    communication_links:
+      Auth Service to Aadhaar Identity Provider:
+        target: identity-provider
+        description: Aadhaar eKYC / OTP verification
+        protocol: https
+        authentication: credentials
+        authorization: technical-user
+        tags:
+        vpn: false
+        ip_filtered: false
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - aadhaar-data
+        data_assets_received:
+          - aadhaar-data
+      Auth Service to Database:
+        target: database
+        description: Read/write authentication tokens
+        protocol: jdbc-encrypted
+        authentication: credentials
+        authorization: technical-user
+        tags:
+        vpn: false
+        ip_filtered: false
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - authentication-tokens
+        data_assets_received:
+          - authentication-tokens
+
+  identity-provider:
+    id: identity-provider
+    description: Aadhaar Identity Provider
+    type: external-entity
+    usage: business
+    size: system
+    technology: identity-provider
+    internet: false
+    machine: virtual
+    encryption: transparent
+    owner: UIDAI
+    confidentiality: strictly-confidential
+    integrity: mission-critical
+    availability: mission-critical
+    multi_tenant: false
+    redundant: true
+    custom_developed_parts: false
+    data_assets_processed:
+      - aadhaar-data
+    data_assets_stored: []
+
+  digilocker-backend:
+    id: digilocker-backend
+    description: DigiLocker Core Backend
+    type: process
+    usage: business
+    size: application
+    technology: application-server
+    internet: false
+    machine: container
+    encryption: transparent
+    owner: DigiLocker
+    confidentiality: confidential
+    integrity: mission-critical
+    availability: mission-critical
+    multi_tenant: false
+    redundant: true
+    custom_developed_parts: true
+    data_assets_processed:
+      - citizen-profile
+      - issued-documents
+      - uploaded-documents
+      - consent-records
+      - authentication-tokens
+    data_assets_stored: []
+    communication_links:
+      Backend to Document Repository:
+        target: document-repository
+        description: Store and retrieve issued and uploaded documents
+        protocol: jdbc-encrypted
+        authentication: credentials
+        authorization: technical-user
+        tags:
+        vpn: false
+        ip_filtered: false
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - issued-documents
+          - uploaded-documents
+        data_assets_received:
+          - issued-documents
+          - uploaded-documents
+      Backend to Database:
+        target: database
+        description: Read/write citizen profile and consent records
+        protocol: jdbc-encrypted
+        authentication: credentials
+        authorization: technical-user
+        tags:
+        vpn: false
+        ip_filtered: false
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - citizen-profile
+          - consent-records
+        data_assets_received:
+          - citizen-profile
+          - consent-records
+      Backend to Consent Manager:
+        target: consent-manager
+        description: Check and update citizen consent
+        protocol: https
+        authentication: token
+        authorization: technical-user
+        tags:
+        vpn: false
+        ip_filtered: false
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - consent-records
+        data_assets_received:
+          - consent-records
+      Backend to Issuer Service:
+        target: issuer-service
+        description: Fetch issued documents and digital signatures
+        protocol: https
+        authentication: token
+        authorization: technical-user
+        tags:
+        vpn: false
+        ip_filtered: false
+        readonly: true
+        usage: business
+        data_assets_sent:
+        data_assets_received:
+          - issued-documents
+          - digital-signatures
+      Backend to Requester Service:
+        target: requester-service
+        description: Share verified documents with requesting parties
+        protocol: https
+        authentication: token
+        authorization: technical-user
+        tags:
+        vpn: false
+        ip_filtered: false
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - issued-documents
+        data_assets_received:
+      Backend to Notification Service:
+        target: notification-service
+        description: Trigger email/SMS notifications to citizens
+        protocol: https
+        authentication: token
+        authorization: technical-user
+        tags:
+        vpn: false
+        ip_filtered: false
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - citizen-profile
+        data_assets_received:
+      Backend to Monitoring Service:
+        target: monitoring-service
+        description: Emit audit and security events
+        protocol: https
+        authentication: token
+        authorization: technical-user
+        tags:
+        vpn: false
+        ip_filtered: false
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - audit-logs
+        data_assets_received:
+
+  document-repository:
+    id: document-repository
+    description: Secure Document Repository
+    type: datastore
+    usage: business
+    size: component
+    technology: database
+    internet: false
+    machine: virtual
+    encryption: data-with-symmetric-shared-key
+    owner: DigiLocker
+    confidentiality: confidential
+    integrity: mission-critical
+    availability: mission-critical
+    multi_tenant: false
+    redundant: true
+    custom_developed_parts: false
+    data_assets_processed: []
+    data_assets_stored:
+      - issued-documents
+      - uploaded-documents
+
+  consent-manager:
+    id: consent-manager
+    description: Consent Management Service
+    type: process
+    usage: business
+    size: service
+    technology: application-server
+    internet: false
+    machine: container
+    encryption: transparent
+    owner: DigiLocker
+    confidentiality: confidential
+    integrity: mission-critical
+    availability: important
+    multi_tenant: false
+    redundant: true
+    custom_developed_parts: true
+    data_assets_processed:
+      - consent-records
+    data_assets_stored: []
+    communication_links:
+      Consent Manager to Database:
+        target: database
+        description: Store consent records
+        protocol: jdbc-encrypted
+        authentication: credentials
+        authorization: technical-user
+        tags:
+        vpn: false
+        ip_filtered: false
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - consent-records
+        data_assets_received:
+          - consent-records
+
+  issuer-service:
+    id: issuer-service
+    description: Government Issuer Service
+    type: external-entity
+    usage: business
+    size: system
+    technology: web-service-rest
+    internet: false
+    machine: virtual
+    encryption: transparent
+    owner: Government
+    confidentiality: confidential
+    integrity: mission-critical
+    availability: important
+    multi_tenant: false
+    redundant: true
+    custom_developed_parts: false
+    data_assets_processed:
+      - issued-documents
+      - digital-signatures
+    data_assets_stored: []
+
+  requester-service:
+    id: requester-service
+    description: Requester Verification Service
+    type: external-entity
+    usage: business
+    size: system
+    technology: web-service-rest
+    internet: false
+    machine: virtual
+    encryption: transparent
+    owner: Requester
+    confidentiality: confidential
+    integrity: mission-critical
+    availability: important
+    multi_tenant: false
+    redundant: true
+    custom_developed_parts: false
+    data_assets_processed:
+      - issued-documents
+    data_assets_stored: []
+
+  notification-service:
+    id: notification-service
+    description: Email and SMS Notification Service
+    type: process
+    usage: business
+    size: service
+    technology: message-queue
+    internet: true
+    machine: container
+    encryption: transparent
+    owner: DigiLocker
+    confidentiality: internal
+    integrity: important
+    availability: important
+    multi_tenant: false
+    redundant: true
+    custom_developed_parts: false
+    data_assets_processed:
+      - citizen-profile
+    data_assets_stored: []
+
+  monitoring-service:
+    id: monitoring-service
+    description: Monitoring and Audit Service
+    type: process
+    usage: business
+    size: service
+    technology: monitoring
+    internet: false
+    machine: container
+    encryption: transparent
+    owner: DigiLocker
+    confidentiality: internal
+    integrity: mission-critical
+    availability: important
+    multi_tenant: false
+    redundant: true
+    custom_developed_parts: false
+    data_assets_processed:
+      - audit-logs
+    data_assets_stored: []
+    communication_links:
+      Monitoring Service to Database:
+        target: database
+        description: Persist audit logs
+        protocol: jdbc-encrypted
+        authentication: credentials
+        authorization: technical-user
+        tags:
+        vpn: false
+        ip_filtered: false
+        readonly: false
+        usage: business
+        data_assets_sent:
+          - audit-logs
+        data_assets_received:
+          - audit-logs
+
+  database:
+    id: database
+    description: DigiLocker Relational Database
+    type: datastore
+    usage: business
+    size: component
+    technology: database
+    internet: false
+    machine: virtual
+    encryption: data-with-symmetric-shared-key
+    owner: DigiLocker
+    confidentiality: confidential
+    integrity: mission-critical
+    availability: mission-critical
+    multi_tenant: false
+    redundant: true
+    custom_developed_parts: false
+    data_assets_processed: []
+    data_assets_stored:
+      - citizen-profile
+      - consent-records
+      - authentication-tokens
+      - audit-logs
+
+trust_boundaries:
+
+  DMZ:
+    id: dmz
+    description: Internet-facing edge services
+    type: network-cloud-security-group
+    tags:
+    technical_assets_inside:
+      - api-gateway
+      - notification-service
+    trust_boundaries_nested:
+
+  Application Zone:
+    id: application-zone
+    description: Internal application and business services
+    type: network-virtual-lan
+    tags:
+    technical_assets_inside:
+      - authentication-service
+      - digilocker-backend
+      - consent-manager
+      - monitoring-service
+    trust_boundaries_nested:
+
+  Data Zone:
+    id: data-zone
+    description: Persistent storage tier
+    type: network-virtual-lan
+    tags:
+    technical_assets_inside:
+      - document-repository
+      - database
+    trust_boundaries_nested:
