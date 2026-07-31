@@ -5,6 +5,9 @@
 **Assignment:** Assignment 6 · Main Course · IIT Roorkee
 **Engine:** [Threagile](https://threagile.io) v1.0.0 (Docker) · Model: [`digilocker.yaml`](digilocker.yaml)
 
+<img width="812" height="1025" alt="Screenshot 2026-07-31 234431" src="https://github.com/user-attachments/assets/eb8f7685-287b-4693-83e5-1385ba32a4c2" />
+
+
 ---
 
 ## 1. Overview
