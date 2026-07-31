@@ -27,7 +27,7 @@ DigiLocker is a Government of India digital document wallet that enables citizen
 
 ![DigiLocker Architecture](digilocker-architecture-enhanced.svg)
 
-*Full-size vector diagram: [`digilocker-architecture-enhanced.svg`](digilocker-architecture-enhanced.svg) · print version: [`digilocker-architecture-enhanced.pdf`](digilocker-architecture-enhanced.pdf)*
+*Full-size vector diagram:   print version: [`digilocker-architecture-enhanced.pdf`](digilocker-architecture-enhanced.pdf)*
 
 Every component is tagged with a DFD element type — **AC** = actor-driven client process, **P** = process, **DS** = data store, **EE** = external entity (3rd-party, out of trust boundary) — and every flow is numbered (1–15), matching the [Data-Flow Register](#5-data-flow-register) below.
 
@@ -42,7 +42,7 @@ Every component is tagged with a DFD element type — **AC** = actor-driven clie
 
 ## 4. Component Register
 
-Role, responsibilities, and privileges for every technical asset. (Standalone print sheet: [`digilocker-component-register.svg`](digilocker-component-register.svg) / [`.pdf`](digilocker-component-register.pdf))
+Role, responsibilities, and privileges for every technical asset. (Standalone print sheet: [`digilocker-component-register.pdf`](digilocker-component-register.pdf`](digilocker-component-register.pdf))
 
 | ID | Component (technology) | Type | Role | Responsibilities | Privileges |
 |---|---|---|---|---|---|
@@ -62,7 +62,7 @@ Role, responsibilities, and privileges for every technical asset. (Standalone pr
 
 ## 5. Data-Flow Register
 
-Protocol, authentication, encryption, data exchanged, and security controls for every communication link. (Standalone print sheet: [`digilocker-dataflow-register.svg`](digilocker-dataflow-register.svg) / [`.pdf`](digilocker-dataflow-register.pdf))
+Protocol, authentication, encryption, data exchanged, and security controls for every communication link. (Standalone print sheet: [`digilocker-dataflow-register.pdf`](digilocker-dataflow-register.pdf) 
 
 `⚠ TBV` = scheme not specified in the Threagile model — **To Be Verified** against the live implementation.
 
@@ -99,7 +99,7 @@ Protocol, authentication, encryption, data exchanged, and security controls for 
 
 ## 7. Risk Analysis Results
 
-**74 risks** identified across 15 data flows ([`risks.json`](output/risks.json) / [`risks.xlsx`](output/risks.xlsx)):
+**74 risks** identified across 15 data flows ([`risks.json`](risks.json) / [`risks.xlsx`](risks.xlsx)):
 
 | Severity | Count |
 |---|---|
