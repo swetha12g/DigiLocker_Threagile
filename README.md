@@ -99,7 +99,7 @@ Protocol, authentication, encryption, data exchanged, and security controls for 
 
 ## 7. Risk Analysis Results
 
-**74 risks** identified across 15 data flows ([`output/risks.json`](output/risks.json) / [`output/risks.xlsx`](output/risks.xlsx)):
+**74 risks** identified across 15 data flows ([`risks.json`](output/risks.json) / [`risks.xlsx`](output/risks.xlsx)):
 
 | Severity | Count |
 |---|---|
@@ -132,7 +132,7 @@ Protocol, authentication, encryption, data exchanged, and security controls for 
 - DigiLocker Backend → Document Repository (flow 7)
 - Monitoring Service → Database (flow 15)
 
-Full per-risk detail (all 74, with rule rationale) is in the Threagile-generated report — see [`output/report.pdf`](output/report.pdf), pages 2–144.
+Full per-risk detail (all 74, with rule rationale) is in the Threagile-generated report — see [`report.pdf`](output/report.pdf), pages 2–144.
 
 ## 8. Formal Verification — Tamarin Prover
 
