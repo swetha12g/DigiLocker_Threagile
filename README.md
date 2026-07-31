@@ -25,7 +25,6 @@ DigiLocker is a Government of India digital document wallet that enables citizen
 
 ## 3. Architecture & Trust Boundaries
 
-![DigiLocker Architecture](digilocker-architecture-enhanced.svg)
 
 *Full-size vector diagram:   print version: [`digilocker-architecture-enhanced.pdf`](digilocker-architecture-enhanced.pdf)*
 
