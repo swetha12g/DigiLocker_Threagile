@@ -1,8 +1,9 @@
 # DigiLocker Threat Model Report
 
 **Prepared by:** Gunda Swetha, Sravani Avadurthi, Nikhil Kumar, Amit Kumar Saini, Sudheer Kumar Thammana
+
 **Date:** 01 Aug 2026
-**Assignment:** Assignment 6 · Main Course · IIT Roorkee
+
 **Engine:** [Threagile](https://threagile.io) v1.0.0 (Docker) · Model: [`digilocker.yaml`](digilocker.yaml)
 
 ---
