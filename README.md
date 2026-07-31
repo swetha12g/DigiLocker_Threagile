@@ -5,9 +5,6 @@
 **Assignment:** Assignment 6 · Main Course · IIT Roorkee
 **Engine:** [Threagile](https://threagile.io) v1.0.0 (Docker) · Model: [`digilocker.yaml`](digilocker.yaml)
 
-<img width="812" height="1025" alt="Screenshot 2026-07-31 234431" src="https://github.com/user-attachments/assets/eb8f7685-287b-4693-83e5-1385ba32a4c2" />
-
-
 ---
 
 ## 1. Overview
@@ -159,7 +156,13 @@ Documented simplifications (see the model's header comments): the Aadhaar SMS OT
 
 A concrete-values companion demo of the same 8-step message sequence (real RSA keys, one interactive run) is provided in [`digilocker_auth_demo.py`](digilocker_auth_demo.py) (`digilocker_auth_dry_run.sh` / `.bat` for a non-interactive dry run).
 
-> **Note:** the captured [`tamarin_full_proof.log`](tamarin_full_proof.log) shows the theory loading and derivation/saturation starting, but the run was interrupted before the final per-lemma verified/falsified summary was captured. Re-run `tamarin-prover --prove digilocker-auth.spthy` for the authoritative verdict before citing these lemmas as proven.
+<img width="812" height="1025" alt="Screenshot 2026-07-31 234431" src="https://github.com/user-attachments/assets/eb8f7685-287b-4693-83e5-1385ba32a4c2" />
+
+
+
+> **Note:** the captured [`tamarin_full_proof.log`](tamarin_full_proof.log) <img width="1416" height="728" alt="tamarin_full_proof" src="https://github.com/user-attachments/assets/78e1197e-5d4e-4d87-9686-da9cbff8dab9" />
+
+ shows the theory loading and derivation/saturation starting, but the run was interrupted before the final per-lemma verified/falsified summary was captured. Re-run `tamarin-prover --prove digilocker-auth.spthy` for the authoritative verdict before citing these lemmas as proven.
 
 ## 9. Model Validation — Fixes Applied During Build
 
