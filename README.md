@@ -1,6 +1,6 @@
 # DigiLocker Threat Model Report
 
-**Prepared by:** Gunda Swetha, Sravani Avadurthi, Nikhil Kumar, Amit Kumar Saini, Sudheer Kumar Thammana
+**Prepared by:** Gunda Swetha
 
 **Date:** 01 Aug 2026
 
