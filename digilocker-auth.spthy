@@ -1,0 +1,179 @@
+theory DigiLockerAuth
+begin
+
+builtins: asymmetric-encryption, signing, hashing
+
+/*
+ * DigiLocker OTP-based Citizen Authentication & Session-Token Issuance
+ * ----------------------------------------------------------------------
+ * Formal-verification counterpart to the Threagile architecture model
+ * (digilocker.yaml). Models the trust-critical path identified there:
+ *
+ *   citizen-web-portal / mobile-app -> api-gateway -> authentication-service
+ *   authentication-service -> identity-provider (UIDAI, Aadhaar)
+ *
+ * i.e. the "Auth Service to Aadhaar Identity Provider" communication link
+ * and the citizen login path, which Threagile can only check structurally
+ * (protocol: https, authentication: token/credentials) but cannot prove
+ * anything about the actual message logic. This model does.
+ *
+ * Roles:
+ *   $C        Citizen client (web portal / mobile app) -- UNBOUNDED: the
+ *             analysis holds for any number of citizens/sessions.
+ *   'DigiLockerAuth'  the (single, real) DigiLocker Authentication Service.
+ *   'UIDAI'           the (single, real) UIDAI Aadhaar Identity Provider.
+ *
+ * Auth Service and UIDAI are modelled as fixed public constants rather
+ * than free agent variables: there genuinely is exactly one of each in
+ * the real architecture (unlike citizens, of which there are many). This
+ * also removes an unbounded "which agent could this be" search dimension
+ * that made an earlier draft of this model intractable for automatic
+ * proof search -- documented here rather than silently changed.
+ *
+ * Simplifications (documented, not hidden):
+ *   - The Aadhaar SMS OTP channel from UIDAI to the citizen's registered
+ *     mobile is modelled as a private (non-network) channel: this is
+ *     realistic because the OTP seed never touches the Dolev-Yao network
+ *     in this model, not because we assert an unconditionally secure
+ *     channel by fiat.
+ *   - The Auth-Service<->UIDAI leg is likewise a private channel fact
+ *     (AI_Chan), representing the pre-registered, credentialed government
+ *     API integration (digilocker.yaml: "authentication: credentials" on
+ *     that link) rather than the public internet-facing surface.
+ *   - Each principal uses one keypair for both encryption and signing.
+ *   - No long-term key compromise / forward-secrecy rules are modelled;
+ *     this is a base secrecy + injective-agreement analysis under the
+ *     standard Dolev-Yao attacker (network attacker, no key leaks).
+ *     Key-compromise resilience is documented as future work.
+ */
+
+// ----------------------- Setup -----------------------
+
+rule Setup_Citizen:
+    [ Fr(~ltkC) ]
+  --[ CitizenKey($C, ~ltkC) ]->
+    [ !Ltk($C, ~ltkC), !Pk($C, pk(~ltkC)), Out(pk(~ltkC)) ]
+
+rule Setup_Auth:
+    [ Fr(~ltkA) ]
+  --[ OnlyOnce('AuthSetup'), AuthKey('DigiLockerAuth', ~ltkA) ]->
+    [ !Ltk('DigiLockerAuth', ~ltkA), !Pk('DigiLockerAuth', pk(~ltkA)), Out(pk(~ltkA)) ]
+
+// Aadhaar enrollment: off-protocol, long-term trust setup between UIDAI
+// and the citizen's registered mobile number. This is the 'aadhaar-data'
+// asset from the Threagile model. It is compromised only if ~seed itself
+// is ever leaked, which no rule below does.
+rule Aadhaar_Enrollment:
+    [ Fr(~seed) ]
+  --[ Enrolled($C, ~seed) ]->
+    [ !OtpSeed($C, ~seed) ]
+
+restriction OnlyOnce:
+  "All x #i #j. OnlyOnce(x) @ #i & OnlyOnce(x) @ #j ==> #i = #j"
+
+// ----------------------- Protocol -----------------------
+
+// 1. Citizen -> Auth Service: login request bound to a fresh nonce.
+rule C_1_Init:
+    [ Fr(~nc), !Pk('DigiLockerAuth', pkA) ]
+  --[ Start($C, ~nc) ]->
+    [ Out( aenc{<'login', $C, ~nc>}pkA ),
+      St_C_1($C, ~nc) ]
+
+// 2. Auth Service -> UIDAI: forward the login for an OTP challenge, with
+//    a fresh nonce so the eventual ack can be bound unambiguously back to
+//    this exact request. This leg runs over the pre-registered,
+//    mutually-authenticated UIDAI<->DigiLocker government API channel --
+//    modelled as a private channel fact (AI_Chan), not the public
+//    Dolev-Yao network. Separate, named simplification from the SMS
+//    out-of-band channel below.
+rule A_1_Forward:
+    [ In( aenc{<'login', C, nc>}pk(~ltkA) ), !Ltk('DigiLockerAuth', ~ltkA), Fr(~na) ]
+  --[ ReceivedLogin(C, nc) ]->
+    [ AI_Chan('DigiLockerAuth', 'UIDAI', <'verify', C, nc, ~na>),
+      St_A_1(C, nc, ~na) ]
+
+// 3. UIDAI: derives a session-bound OTP from the enrolled seed, delivers
+//    it to the citizen over the private (non-network) SMS channel, and
+//    acks the OTP's hash back to Auth Service over the private API
+//    channel.
+rule I_1_Otp_And_Ack:
+    [ AI_Chan('DigiLockerAuth', 'UIDAI', <'verify', C, nc, na>), !OtpSeed(C, seed) ]
+  --[ OtpIssued(C, nc, h(<seed, nc>)) ]->
+    [ Sms('UIDAI', C, <nc, h(<seed, nc>)>),
+      AI_Chan('UIDAI', 'DigiLockerAuth', <'ack', C, nc, na, h(h(<seed, nc>))>) ]
+
+// 4. Citizen receives the OTP over the private SMS channel.
+rule C_2_Recv_Otp:
+    [ St_C_1($C, ~nc), Sms('UIDAI', $C, <~nc, otp>) ]
+  --[ OtpReceived($C, ~nc, otp) ]->
+    [ St_C_2($C, ~nc, otp) ]
+
+// 5. Auth Service receives UIDAI's ack for this exact session.
+rule A_2_Recv_Ack:
+    [ St_A_1(C, nc, na), AI_Chan('UIDAI', 'DigiLockerAuth', <'ack', C, nc, na, hotp>) ]
+  --[ AckReceived(C, nc, hotp) ]->
+    [ St_A_2(C, nc, hotp) ]
+
+// 6. Citizen submits the OTP back to Auth Service.
+rule C_3_Submit_Otp:
+    [ St_C_2($C, ~nc, otp), !Pk('DigiLockerAuth', pkA) ]
+  --[ Submitted($C, ~nc, otp) ]->
+    [ Out( aenc{<'otp', ~nc, otp>}pkA ),
+      St_C_3($C, ~nc) ]
+
+// 7. Auth Service verifies the OTP hash and issues a fresh, signed
+//    session token (the 'authentication-tokens' asset), encrypted for
+//    the citizen.
+rule A_3_Verify_Issue_Token:
+    [ St_A_2(C, nc, hotp), !Ltk('DigiLockerAuth', ~ltkA), !Pk(C, pkC),
+      In( aenc{<'otp', nc, otp>}pk(~ltkA) ), Fr(~token) ]
+  --[ Eq(h(otp), hotp),
+      Issued(C, nc, ~token),
+      Running(C, <nc, ~token>) ]->
+    [ Out( aenc{<'token', nc, ~token, sign{<'token', nc, ~token>}~ltkA>}pkC ) ]
+
+// 8. Citizen verifies the signature and accepts the session token.
+rule C_4_Accept_Token:
+    [ St_C_3($C, ~nc), !Ltk($C, ~ltkC), !Pk('DigiLockerAuth', pkA),
+      In( aenc{<'token', ~nc, token, sig>}pk(~ltkC) ) ]
+  --[ Eq(verify(sig, <'token', ~nc, token>, pkA), true),
+      Commit($C, <~nc, token>),
+      SecretToken(token) ]->
+    [ ]
+
+restriction Equality:
+  "All x y #i. Eq(x, y) @ #i ==> x = y"
+
+// ----------------------- Security properties -----------------------
+
+// Sanity check: the protocol has at least one complete, attacker-free run.
+// (Without this, a lemma could "hold" only because the protocol never
+// actually completes — always check this first.)
+lemma executable:
+  exists-trace
+  "Ex C nc token #i. Commit(C, <nc, token>) @ #i"
+
+// The session token the citizen accepts is never learned by the attacker.
+lemma token_secrecy:
+  "All token #i.
+     SecretToken(token) @ #i ==> not (Ex #j. K(token) @ #j)"
+
+// The long-term Aadhaar OTP seed (the 'aadhaar-data' asset) is never
+// learned by the attacker, i.e. the private-SMS-channel assumption is
+// not undermined anywhere else in the model.
+lemma seed_secrecy:
+  "All C seed #i.
+     Enrolled(C, seed) @ #i ==> not (Ex #j. K(seed) @ #j)"
+
+// Injective agreement: every token the citizen commits to corresponds to
+// exactly one Auth Service issuance for that citizen and nonce, and that
+// issuance happened first (no replay, no impersonation, no cross-session
+// confusion).
+lemma auth_injective_agreement:
+  "All C nc token #i.
+     Commit(C, <nc, token>) @ #i ==>
+       (Ex #j. Running(C, <nc, token>) @ #j & j < i) &
+       (All C2 #i2. Commit(C2, <nc, token>) @ #i2 ==> #i2 = #i)"
+
+end
